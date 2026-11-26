@@ -1,0 +1,133 @@
+1. Test
+ModelTest:
+
+@Test
+void objectDiagramSituation() {
+
+    Author author2 = new Author("Second author");
+
+    book.addAuthor(author2);
+
+    Copy copy2 = new Copy("C-002", book);
+
+    student.borrow(copy, DAY);
+    student.borrow(copy2, DAY);
+
+    Member teacher = new TeacherMember(
+            "T-03",
+            "Teacher",
+            "t3@example.org",
+            "CS"
+    );
+
+    Reservation reservation =
+            teacher.reserve(book, DAY.plusDays(1));
+
+    assertEquals(2, book.getAuthors().size());
+    assertEquals(2, book.getCopies().size());
+
+    assertEquals(2, student.getLoans().size());
+
+    assertTrue(copy.getLoans().contains(
+            student.getLoans().get(0)));
+
+    assertTrue(copy2.getLoans().contains(
+            student.getLoans().get(1)));
+
+    assertTrue(teacher.getReservations().contains(reservation));
+
+    assertEquals(reservation, book.firstReservation());
+}
+
+2. Object diagram
+أobject-diagram.puml:
+
+@startuml
+
+object "author1 : Author" as a1 {
+  name = "First author"
+}
+
+object "author2 : Author" as a2 {
+  name = "Second author"
+}
+
+object "book : Book" as b {
+  isbn = "978-0-00-000001-1"
+  title = "Software Engineering"
+  year = 2016
+}
+
+object "c1 : Copy" as c1 {
+  inventoryNumber = "C-001"
+  status = BORROWED
+}
+
+object "c2 : Copy" as c2 {
+  inventoryNumber = "C-002"
+  status = BORROWED
+}
+
+object "student : StudentMember" as s {
+  memberNumber = "M-01"
+  name = "Student 1"
+  email = "s1@example.org"
+  level = "L3"
+}
+
+object "teacher : TeacherMember" as t {
+  memberNumber = "T-03"
+  name = "Teacher 3"
+  email = "t3@example.org"
+  department = "CS"
+}
+
+object "loan1 : Loan" as l1 {
+  loanDate = 2026-10-01
+  dueDate = 2026-10-15
+}
+
+object "loan2 : Loan" as l2 {
+  loanDate = 2026-10-01
+  dueDate = 2026-10-15
+}
+
+object "reservation : Reservation" as r {
+  date = 2026-10-02
+}
+
+b -- a1
+b -- a2
+
+b -- c1
+b -- c2
+
+s -- l1
+s -- l2
+
+l1 -- c1
+l2 -- c2
+
+t -- r
+r -- b
+
+@enduml
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
