@@ -1,0 +1,38 @@
+(a) Why is the constructor of Loan not public? What could happen if any class could create a loan?
+
+The constructor of Loan is not public because loans must be created only by Member.borrow().
+
+If any class could create a loan, it could bypass the borrowing rules and create invalid loans.
+
+(b) How does your code guarantee the multiplicity 1.. of the authors of a book? Which multiplicity cannot be guaranteed?*
+
+The Book constructor requires at least one author.
+
+The multiplicity of an Author having at least one Book cannot be guaranteed by the constructor. It can be checked later.
+
+(c) Why do the getters return unmodifiable views of the collections?
+
+To protect the internal collections from modification and preserve the consistency of relationships.
+
+(d) Figure 1 has isLate() : Boolean, your code isLate(LocalDate today). Why? Is the diagram wrong?
+
+Because the method needs the current date to determine whether the loan is late.
+
+The diagram is not wrong; it is simplified.
+
+(e) What happens when a student becomes a teacher? Propose another design.
+
+A StudentMember cannot directly become a TeacherMember because they are different classes.
+
+Another design is to use one Member class with a MemberType attribute that can change between Student and Teacher.
+
+(f) Which associations did you make bidirectional? What does a bidirectional association cost?
+
+The bidirectional associations are:
+- Member – Loan
+- Loan – Copy
+- Copy – Book
+- Member – Reservation
+- Reservation – Book
+- Book – Author
+The cost is more memory and the need to update both sides of each association to maintain consistency.
