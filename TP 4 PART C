@@ -1,0 +1,180 @@
+tp4-library-model
+Package:
+
+library.modeL
+1. CopyStatus.java
+
+package library.model;
+
+public enum CopyStatus {
+    AVAILABLE,
+    BORROWED,
+    LOST
+}
+2. Author.java
+
+package library.model;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
+public class Author {
+
+    private String name;
+    private List<Book> books = new ArrayList<>();
+
+    public Author(String name) {
+        this.name = name;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public List<Book> getBooks() {
+        return Collections.unmodifiableList(books);
+    }
+
+    void addBook(Book book) {
+        if (!books.contains(book)) {
+            books.add(book);
+        }
+    }
+}
+3. Book.java
+
+package library.model;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
+public class Book {
+
+    private String isbn;
+    private String title;
+    private int year;
+
+    private List<Author> authors = new ArrayList<>();
+    private List<Copy> copies = new ArrayList<>();
+    private List<Reservation> reservations = new ArrayList<>();
+
+    public Book(String isbn, String title, int year, Author author) {
+        this.isbn = isbn;
+        this.title = title;
+        this.year = year;
+        addAuthor(author);
+    }
+
+    public List<Author> getAuthors() {
+        return Collections.unmodifiableList(authors);
+    }
+
+    public List<Copy> getCopies() {
+        return Collections.unmodifiableList(copies);
+    }
+
+    public List<Reservation> getReservations() {
+        return Collections.unmodifiableList(reservations);
+    }
+
+    public void addAuthor(Author author) {
+        if (!authors.contains(author)) {
+            authors.add(author);
+            author.addBook(this);
+        }
+    }
+
+    void addCopy(Copy copy) {
+        copies.add(copy);
+    }
+
+    void addReservation(Reservation reservation) {
+        reservations.add(reservation);
+        reservations.sort(
+            (r1, r2) -> r1.getDate().compareTo(r2.getDate())
+        );
+    }
+
+    public Reservation firstReservation() {
+        if (reservations.isEmpty()) {
+            return null;
+        }
+        return reservations.get(0);
+    }
+
+    public int availableCopies() {
+        int count = 0;
+
+        for (Copy copy : copies) {
+            if (copy.isAvailable()) {
+                count++;
+            }
+        }
+
+        return count;
+    }
+}
+4. Copy.java
+
+package library.model;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
+public class Copy {
+
+    private String inventoryNumber;
+    private CopyStatus status;
+    private Book book;
+    private List<Loan> loans = new ArrayList<>();
+
+    public Copy(String inventoryNumber, Book book) {
+        this.inventoryNumber = inventoryNumber;
+        this.book = book;
+        this.status = CopyStatus.AVAILABLE;
+
+        book.addCopy(this);
+    }
+
+    public boolean isAvailable() {
+        return status == CopyStatus.AVAILABLE;
+    }
+
+    public List<Loan> getLoans() {
+        return Collections.unmodifiableList(loans);
+    }
+
+    public Loan getCurrentLoan() {
+        for (int i = loans.size() - 1; i >= 0; i--) {
+            if (!loans.get(i).isClosed()) {
+                return loans.get(i);
+            }
+        }
+        return null;
+    }
+
+    void addLoan(Loan loan) {
+        loans.add(loan);
+        status = CopyStatus.BORROWED;
+    }
+
+    void makeAvailable() {
+        if (status != CopyStatus.LOST) {
+            status = CopyStatus.AVAILABLE;
+        }
+    }
+
+    public void markLost() {
+        if (!isAvailable()) {
+            throw new IllegalStateException();
+        }
+
+        status = CopyStatus.LOST;
+    }
+}
+
+
+3. Book.java
