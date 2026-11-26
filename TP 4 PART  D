@@ -1,0 +1,176 @@
+src/test/java/library/model
+package library.model;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
+import java.time.LocalDate;
+
+import static org.junit.jupiter.api.Assertions.*;
+
+class ModelTest {
+
+    private static final LocalDate DAY =
+            LocalDate.of(2026, 10, 1);
+
+    private Author author;
+    private Book book;
+    private Copy copy;
+    private Member student;
+
+    @BeforeEach
+    void setUp() {
+        author = new Author("First author");
+
+        book = new Book(
+                "978-0-00-000001-1",
+                "Software Engineering",
+                2016,
+                author
+        );
+
+        copy = new Copy("C-001", book);
+
+        student = new StudentMember(
+                "M-01",
+                "Student 1",
+                "s1@example.org",
+                "L3"
+        );
+    }
+
+    @Test
+    void bookAndAuthorKnowEachOther() {
+        assertTrue(book.getAuthors().contains(author));
+        assertTrue(author.getBooks().contains(book));
+    }
+
+    @Test
+    void newCopyIsAvailableAndKnownByBook() {
+        assertTrue(copy.isAvailable());
+        assertTrue(book.getCopies().contains(copy));
+    }
+
+    @Test
+    void borrowingLinksLoanAndChangesCopyStatus() {
+        Loan loan = student.borrow(copy, DAY);
+
+        assertTrue(student.getLoans().contains(loan));
+        assertTrue(copy.getLoans().contains(loan));
+        assertFalse(copy.isAvailable());
+    }
+
+    @Test
+    void studentCannotBorrowSixthCopy() {
+        for (int i = 1; i <= 5; i++) {
+            Book b = new Book("ISBN-" + i, "Book " + i,
+                    2020, author);
+            Copy c = new Copy("C-" + i, b);
+            student.borrow(c, DAY);
+        }
+
+        Book b6 = new Book("ISBN-6", "Book 6", 2020, author);
+        Copy c6 = new Copy("C-6", b6);
+
+        assertThrows(
+                IllegalStateException.class,
+                () -> student.borrow(c6, DAY)
+        );
+    }
+
+    @Test
+    void teacherCanBorrowTenCopies() {
+        Member teacher = new TeacherMember(
+                "T-01", "Teacher", "t@example.org", "CS"
+        );
+
+        for (int i = 1; i <= 10; i++) {
+            Book b = new Book("T-ISBN-" + i,
+                    "Book " + i, 2020, author);
+
+            Copy c = new Copy("T-C-" + i, b);
+
+            teacher.borrow(c, DAY);
+        }
+
+        assertEquals(10, teacher.getLoans().size());
+    }
+
+    @Test
+    void copyCannotBeBorrowedTwice() {
+        student.borrow(copy, DAY);
+
+        Member anotherStudent = new StudentMember(
+                "M-02", "Student 2", "s2@example.org", "L3"
+        );
+
+        assertThrows(
+                IllegalStateException.class,
+                () -> anotherStudent.borrow(copy, DAY)
+        );
+    }
+
+    @Test
+    void closingLoanMakesCopyAvailableAndKeepsHistory() {
+        Loan loan = student.borrow(copy, DAY);
+
+        loan.close(DAY.plusDays(5));
+
+        assertTrue(copy.isAvailable());
+        assertTrue(copy.getLoans().contains(loan));
+    }
+
+    @Test
+    void loanIsLateAfterDueDate() {
+        Loan loan = student.borrow(copy, DAY);
+
+        assertFalse(loan.isLate(DAY.plusDays(14)));
+        assertTrue(loan.isLate(DAY.plusDays(15)));
+    }
+
+    @Test
+    void collectionsCannotBeModified() {
+        assertThrows(
+                UnsupportedOperationException.class,
+                () -> book.getAuthors().clear()
+        );
+
+        assertThrows(
+                UnsupportedOperationException.class,
+                () -> student.getLoans().clear()
+        );
+
+        assertThrows(
+                UnsupportedOperationException.class,
+                () -> copy.getLoans().clear()
+        );
+    }
+
+    @Test
+    void reservationsAreKeptInOrder() {
+        Member teacher = new TeacherMember(
+                "T-02", "Teacher", "t2@example.org", "CS"
+        );
+
+        teacher.reserve(book, DAY.plusDays(3));
+        Reservation first = teacher.reserve(book, DAY.plusDays(1));
+
+        assertEquals(first, book.firstReservation());
+    }
+
+    @Test
+    void onlyAvailableCopyCanBeMarkedLost() {
+        student.borrow(copy, DAY);
+
+        assertThrows(
+                IllegalStateException.class,
+                () -> copy.markLost()
+        );
+
+        student.getLoans().get(0).close(DAY.plusDays(1));
+
+        copy.markLost();
+
+        assertEquals(CopyStatus.LOST, copy.getStatus());
+    }
+}
