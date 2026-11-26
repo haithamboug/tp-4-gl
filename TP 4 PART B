@@ -1,0 +1,96 @@
+1. Navigability table   
+Association	           Direction(s)             	Needed by
+Member – Loan        	Both directions           	Borrowing and viewing loans
+Loan – Copy	           Both directions          	Finding the current loan of a copy
+Copy – Book	           Both directions          	Counting available copies
+Member – Reservation 	Both directions           	Viewing member reservations
+Reservation – Book  	Both directions           	Finding the first reservation
+Book – Author	        Both directions           	Finding authors of a book and books of an author
+
+2. Operations of each class
+Class           	Operations
+Member	          borrow(), reserve(), maxLoans()
+StudentMember    	maxLoans()
+TeacherMember    	maxLoans()
+Loan	            close(), isLate()
+Copy            	isAvailable(), getCurrentLoan(), markLost()
+Book            	addAuthor(), firstReservation(), availableCopies()
+Author          	addBook()
+Reservation	      Constructo
+
+library-design.puml:
+@startuml
+skinparam classAttributeIconSize 0
+hide circle
+
+abstract class Member {
+  - memberNumber : String
+  - name : String
+  - email : String
+  + maxLoans() : int
+  + borrow(copy : Copy, date : LocalDate) : Loan
+  + reserve(book : Book, date : LocalDate) : Reservation
+}
+
+class StudentMember {
+  - level : String
+  + maxLoans() : int
+}
+
+class TeacherMember {
+  - department : String
+  + maxLoans() : int
+}
+
+class Loan {
+  - loanDate : LocalDate
+  - dueDate : LocalDate
+  - returnDate : LocalDate
+  + close(date : LocalDate) : void
+  + isLate(today : LocalDate) : boolean
+}
+
+class Copy {
+  - inventoryNumber : String
+  - status : CopyStatus
+  + isAvailable() : boolean
+  + getCurrentLoan() : Loan
+  + markLost() : void
+}
+
+class Book {
+  - isbn : String
+  - title : String
+  - year : int
+  + addAuthor(author : Author) : void
+  + firstReservation() : Reservation
+  + availableCopies() : int
+}
+
+class Author {
+  - name : String
+}
+
+class Reservation {
+  - date : LocalDate
+}
+
+enum CopyStatus {
+  AVAILABLE
+  BORROWED
+  LOST
+}
+
+Member <|-- StudentMember
+Member <|-- TeacherMember
+
+Member "1" --> "0..*" Loan
+Loan "0..*" --> "1" Copy
+Copy "0..*" --> "1" Book
+
+Member "1" --> "0..*" Reservation
+Reservation "0..*" --> "1" Book
+
+Book "0..*" <--> "1..*" Author
+@enduml
+
