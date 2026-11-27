@@ -1,0 +1,216 @@
+1. Member.java;
+
+package library.model;
+
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
+public abstract class Member {
+
+    private final String memberNumber;
+    private final String name;
+    private final String email;
+
+    private final List<Loan> loans = new ArrayList<>();
+    private final List<Reservation> reservations = new ArrayList<>();
+
+    protected Member(String memberNumber, String name, String email) {
+        this.memberNumber = memberNumber;
+        this.name = name;
+        this.email = email;
+    }
+
+    public String getMemberNumber() {
+        return memberNumber;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public List<Loan> getLoans() {
+        return Collections.unmodifiableList(loans);
+    }
+    public List<Reservation> getReservations() {
+        return Collections.unmodifiableList(reservations);
+    }
+    public abstract int maxLoans();
+    public boolean canBorrow() {
+        long activeLoans = loans.stream()
+                .filter(loan -> !loan.isClosed())
+                .count();
+        return activeLoans < maxLoans();
+    }
+    public Loan borrow(Copy copy, LocalDate startDate) {
+        if (!canBorrow())
+            throw new IllegalStateException("Maximum loans reached");
+        if (!copy.isAvailable())
+            throw new IllegalStateException("Copy is not available");
+
+        return new Loan(this, copy, startDate);
+    }
+    public Reservation reserve(Book book, LocalDate date) {
+        return new Reservation(this, book, date);
+    }
+    void addLoan(Loan loan) {
+        loans.add(loan);
+    }
+    void addReservation(Reservation reservation) {
+        reservations.add(reservation);
+    }
+}
+
+2. StudentMember.java;
+package library.model;
+public class StudentMember extends Member {
+    private final String level;
+    public StudentMember(String memberNumber, String name,
+                         String email, String level) {
+        super(memberNumber, name, email);
+        this.level = level;
+    }
+    public String getLevel() {
+        return level;
+    }
+    @Override
+    public int maxLoans() {
+        return 5;
+   }
+}
+
+3. TeacherMember.java;
+package library.model;
+public class TeacherMember extends Member {
+    private final String department;
+    public TeacherMember(String memberNumber, String name,
+                         String email, String department) {
+        super(memberNumber, name, email);
+        this.department = department;
+    }
+    public String getDepartment() {
+        return department;
+    }
+    @Override
+    public int maxLoans() {
+        return 10;
+    }
+}
+
+4. Loan.java;
+
+package library.model;
+
+import java.time.LocalDate;
+
+public class Loan {
+
+    private final LocalDate loanDate;
+    private final LocalDate dueDate;
+    private LocalDate returnDate;
+
+    private final Member member;
+    private final Copy copy;
+
+    Loan(Member member, Copy copy, LocalDate loanDate) {
+        this.member = member;
+        this.copy = copy;
+        this.loanDate = loanDate;
+        this.dueDate = loanDate.plusDays(14);
+
+        member.addLoan(this);
+        copy.addLoan(this);
+    }
+
+    public LocalDate getLoanDate() {
+        return loanDate;
+    }
+
+    public LocalDate getDueDate() {
+        return dueDate;
+    }
+
+    public LocalDate getReturnDate() {
+        return returnDate;
+    }
+    public Member getMember() {
+        return member;
+    }
+    public Copy getCopy() {
+        return copy;
+    }
+    public boolean isClosed() {
+        return returnDate != null;
+    }
+    public boolean isLate(LocalDate today) {
+        LocalDate effectiveDate =
+                returnDate == null ? today : returnDate;
+        return effectiveDate.isAfter(dueDate);
+    }
+    public void close(LocalDate date) {
+        if (isClosed())
+            throw new IllegalStateException("Loan already closed");
+        returnDate = date;
+        copy.makeAvailable();
+    }
+}
+
+
+5. Reservation.java;
+
+package library.model;
+
+import java.time.LocalDate;
+public class Reservation {
+    private final LocalDate date;
+    private final Member member;
+    private final Book book;
+    Reservation(Member member, Book book, LocalDate date) {
+        this.member = member;
+        this.book = book;
+        this.date = date;
+        member.addReservation(this);
+        book.addReservation(this);
+    }
+    public LocalDate getDate() {
+        return date;
+    }
+    public Member getMember() {
+        return member;
+    }
+    public Book getBook() {
+        return book;
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
