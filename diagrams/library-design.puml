@@ -1,0 +1,85 @@
+
+@startuml library-design
+
+skinparam classAttributeIconSize 0
+hide circle
+
+abstract class Member {
+  - memberNumber : String
+  - name : String
+  - email : String
+  - loans : List<Loan>
+  - reservations : List<Reservation>
+  + maxLoans() : int
+  + canBorrow() : boolean
+  + borrow(copy : Copy, date : LocalDate) : Loan
+  + reserve(book : Book, date : LocalDate) : Reservation
+}
+
+class StudentMember {
+  - level : String
+  + maxLoans() : int
+}
+
+class TeacherMember {
+  - department : String
+  + maxLoans() : int
+}
+
+class Loan {
+  - loanDate : LocalDate
+  - dueDate : LocalDate
+  - returnDate : LocalDate
+  + close(date : LocalDate) : void
+  + isLate(today : LocalDate) : boolean
+}
+
+class Copy {
+  - inventoryNumber : String
+  - status : CopyStatus
+  - loans : List<Loan>
+  + isAvailable() : boolean
+  + getCurrentLoan() : Loan
+  + markLost() : void
+}
+
+class Book {
+  - isbn : String
+  - title : String
+  - year : int
+  - authors : List<Author>
+  - copies : List<Copy>
+  - reservations : List<Reservation>
+  + availableCopies() : int
+  + addAuthor(author : Author) : void
+  + firstReservation() : Reservation
+}
+
+class Reservation {
+  - date : LocalDate
+}
+
+class Author {
+  - name : String
+  - books : List<Book>
+}
+
+enum CopyStatus {
+  AVAILABLE
+  BORROWED
+  LOST
+}
+
+Member <|-- StudentMember
+Member <|-- TeacherMember
+
+Member "1" <--> "0..*" Loan : loans
+Loan "0..*" <--> "1" Copy : copy
+
+Copy "0..*" <--> "1" Book : book
+Member "1" <--> "0..*" Reservation : reservations
+Reservation "0..*" <--> "1" Book : book
+
+Book "1..*" <--> "1..*" Author : authors
+
+@enduml
